@@ -622,42 +622,44 @@ func opCreate(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 }
 
 func opCreate2(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
-	if interpreter.readOnly {
-		return nil, ErrWriteProtection
-	}
-	var (
-		endowment    = scope.Stack.pop()
-		offset, size = scope.Stack.pop(), scope.Stack.pop()
-		salt         = scope.Stack.pop()
-		input        = scope.Memory.GetCopy(int64(offset.Uint64()), int64(size.Uint64()))
-		gas          = scope.Contract.Gas
-	)
-	// Apply EIP150
-	gas -= gas / 64
-	scope.Contract.UseGas(gas)
-	// reuse size int for stackvalue
-	stackvalue := size
-	//TODO: use uint256.Int instead of converting with toBig()
-	bigEndowment := big0
-	if !endowment.IsZero() {
-		bigEndowment = endowment.ToBig()
-	}
-	res, addr, returnGas, suberr := interpreter.evm.Create2(scope.Contract, input, gas,
-		bigEndowment, &salt)
-	// Push item on the stack based on the returned error.
-	if suberr != nil {
-		stackvalue.Clear()
-	} else {
-		stackvalue.SetBytes(addr.Bytes())
-	}
-	scope.Stack.push(&stackvalue)
-	scope.Contract.Gas += returnGas
+	//@p2perc20rollup Don't allow deployment of contracts.
 
-	if suberr == ErrExecutionReverted {
-		interpreter.returnData = res // set REVERT data to return data buffer
-		return res, nil
-	}
-	interpreter.returnData = nil // clear dirty return data buffer
+	// if interpreter.readOnly {
+	// 	return nil, ErrWriteProtection
+	// }
+	// var (
+	// 	endowment    = scope.Stack.pop()
+	// 	offset, size = scope.Stack.pop(), scope.Stack.pop()
+	// 	salt         = scope.Stack.pop()
+	// 	input        = scope.Memory.GetCopy(int64(offset.Uint64()), int64(size.Uint64()))
+	// 	gas          = scope.Contract.Gas
+	// )
+	// // Apply EIP150
+	// gas -= gas / 64
+	// scope.Contract.UseGas(gas)
+	// // reuse size int for stackvalue
+	// stackvalue := size
+	// //TODO: use uint256.Int instead of converting with toBig()
+	// bigEndowment := big0
+	// if !endowment.IsZero() {
+	// 	bigEndowment = endowment.ToBig()
+	// }
+	// res, addr, returnGas, suberr := interpreter.evm.Create2(scope.Contract, input, gas,
+	// 	bigEndowment, &salt)
+	// // Push item on the stack based on the returned error.
+	// if suberr != nil {
+	// 	stackvalue.Clear()
+	// } else {
+	// 	stackvalue.SetBytes(addr.Bytes())
+	// }
+	// scope.Stack.push(&stackvalue)
+	// scope.Contract.Gas += returnGas
+
+	// if suberr == ErrExecutionReverted {
+	// 	interpreter.returnData = res // set REVERT data to return data buffer
+	// 	return res, nil
+	// }
+	// interpreter.returnData = nil // clear dirty return data buffer
 	return nil, nil
 }
 

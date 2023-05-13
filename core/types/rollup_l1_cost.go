@@ -77,7 +77,11 @@ func NewL1CostFunc(config *params.ChainConfig, statedb StateGetter) L1CostFunc {
 func L1Cost(rollupDataGas uint64, l1BaseFee, overhead, scalar *big.Int) *big.Int {
 	l1GasUsed := new(big.Int).SetUint64(rollupDataGas)
 	l1GasUsed = l1GasUsed.Add(l1GasUsed, overhead)
+	//@p2perc20rollup multiply the estimated cost by the exchange rate
+	// between L1 native gas token and erc20 token used as native in rollup.
+	priceOfL1NativeToL2ERC20 := big.NewInt(18)
 	l1Cost := l1GasUsed.Mul(l1GasUsed, l1BaseFee)
+	l1Cost = l1Cost.Mul(l1Cost, priceOfL1NativeToL2ERC20)
 	l1Cost = l1Cost.Mul(l1Cost, scalar)
 	return l1Cost.Div(l1Cost, big.NewInt(1_000_000))
 }
